@@ -52,3 +52,6 @@ s1.display()
 
 s.student_marks()
 s1.student_marks()
+
+# __init__ is a python constructor that runs when new object is created.
+# self is a reference of the object inside the class method.
