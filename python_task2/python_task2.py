@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 pd.set_option('display.max_columns',None)
 
-df = pd.read_csv("train.csv")
+df = pd.read_csv("python_task2/SuperStoreSales(train).csv")
 
 print(df.head())
 print(df.shape)
@@ -20,7 +20,7 @@ if df["Postal Code"].isnull().any():
     
 
 highest_value = df.groupby("Category")["Sales"].sum()
-highest_category = highest_value.idxmax
+highest_category = highest_value.idxmax()
 print(f"highest category:{highest_category}")
 
 avg_value_per_segment = df.groupby("Segment")["Sales"].mean()
