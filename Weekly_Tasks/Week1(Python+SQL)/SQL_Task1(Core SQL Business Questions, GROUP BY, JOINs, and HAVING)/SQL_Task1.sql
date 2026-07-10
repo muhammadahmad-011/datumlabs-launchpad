@@ -35,3 +35,8 @@ join species_details sd on i.species = sd.species_name
 where sunlight_requirement = 'Full Sun'
 group by sunlight_requirement;
 
+                             -------------
+							 
+select * from iris_data as i
+join species_details sd on i.species = sd.species_name
+where id = 149;
