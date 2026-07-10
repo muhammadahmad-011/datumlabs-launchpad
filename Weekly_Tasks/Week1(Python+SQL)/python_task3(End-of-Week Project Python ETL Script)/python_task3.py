@@ -1,8 +1,15 @@
 import pandas as pd
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 pd.set_option("display.max_columns",None)
 
-df = pd.read_csv("Weekly_Tasks/Week1(Python+SQL)/python_task3(End-of-Week Project Python ETL Script)/titanic(train_and_test2).csv")
+csv_filename = os.getenv("FILE_NAME")
+dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(dir, csv_filename)
+
+df = pd.read_csv(file_path)
 
 print(df.head())
 print(df.shape)
