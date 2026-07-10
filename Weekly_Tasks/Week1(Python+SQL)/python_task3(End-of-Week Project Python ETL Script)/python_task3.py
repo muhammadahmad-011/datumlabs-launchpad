@@ -2,7 +2,7 @@ import pandas as pd
 
 pd.set_option("display.max_columns",None)
 
-df = pd.read_csv("python_task3/titanic(train_and_test2).csv")
+df = pd.read_csv("Weekly_Tasks/Week1(Python+SQL)/python_task3(End-of-Week Project Python ETL Script)/titanic(train_and_test2).csv")
 
 print(df.head())
 print(df.shape)
