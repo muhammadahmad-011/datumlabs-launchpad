@@ -9,7 +9,8 @@ csv_filename = os.getenv("FILE_NAME")
 dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(dir, csv_filename)
 
-df = pd.read_csv(file_path)
+keep_cols = ['Passengerid','Age','Fare','Sex','sibsp','Parch','Pclass','Embarked','2urvived']
+df = pd.read_csv(file_path,usecols=keep_cols)
 
 print(df.head())
 print(df.shape)
