@@ -20,7 +20,7 @@ print(df.isnull().sum())
 
 df = df.rename(columns={"sibsp":"sibling_spouse","Pclass":"passenger_class","2urvived":"survived","Parch":"parent_children"})
 
-df["Embarked"]=df["Embarked"].fillna(0)
+df["Embarked"]=df["Embarked"].fillna(df["Embarked"].mode()[0])
 
 df["Age"]=df["Age"].astype(int)
 df["Embarked"]=df["Embarked"].astype(int)
