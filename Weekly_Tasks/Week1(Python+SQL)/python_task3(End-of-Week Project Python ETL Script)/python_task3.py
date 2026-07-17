@@ -36,5 +36,4 @@ print(f"anomalies: {anomalies}")
 duplicates = df.duplicated().sum()
 print(f"duplicates: {duplicates}")
 
-csv_output_file = ("cleaned titanic csv file")
 df.to_csv("csv_output_file",index=False)
