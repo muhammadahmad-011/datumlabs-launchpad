@@ -1,0 +1,155 @@
+
+:root {
+  --marimo-heading-font: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell;
+  --marimo-monospace-font: monospace;
+
+  /* dlt colors */
+  --dlt-color-lime: #c6d300;
+  --dlt-color-aqua: #59c1d5;
+  --dlt-color-purple: #191937;
+  --dlt-color-pink: #EE746D;
+
+  /* badge colors */
+  --grey-bg: #E0E0E0;
+  --grey-text: #555555;
+  --yellow-bg: #F2D6A2;
+  --yellow-text: #AD7F37;
+  --green-bg: #a8e4ac;
+  --green-text: #468A47;
+  --red-text: #D47672;
+  --red-bg: #FBE8E8;
+}
+
+/* Reduce gap between cells */
+#App .marimo-cell {
+  margin-bottom: 0;
+}
+
+/* Make headings bold */
+.markdown h1 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.markdown h2 {
+  color: var(--dlt-color-purple);
+}
+
+.markdown h3 {
+  font-weight: 600;
+  margin-bottom: 0;
+  padding-top: 0.5rem;
+  /* border-top: 1px dashed #ccc; */
+}
+
+
+
+/* Increase paragraph font size and change color */
+.paragraph {
+  font-size: 1.2rem;
+}
+
+.prose {
+  max-width: 100%;
+}
+
+
+/* Sections with content get spacing */
+#App .marimo-cell .output-area:has(.section-marker.has-content) {
+  margin-top: 0.25rem;
+}
+
+/* Section header: shaded bar with bottom border */
+.section-header {
+  border-top: 1px dashed #333;
+  padding-top: 1.5rem;
+}
+
+.section-switch {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .section-subtitle {
+    display: none;
+  }
+}
+
+marimo-callout-output .border {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Pipeline execution visualization styles */
+.pipeline-execution-container {
+  padding-top: 16px;
+  padding-bottom: 10px;
+}
+
+.pipeline-execution-layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.pipeline-execution-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.pipeline-execution-timeline {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 0 0 40%;
+}
+
+.pipeline-execution-timeline-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  height: 16px;
+}
+
+/* Note: .pipeline-execution-timeline-segment uses inline styles for dynamic width, color, and border-radius */
+
+.pipeline-execution-labels {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.pipeline-execution-badges {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Status badge styles */
+.status-badge {
+  padding: 6px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  font-size: 1rem;
+  background-color: transparent;
+  border: 1px solid currentColor;
+}
+
+.status-badge-yellow {
+  color: var(--yellow-text);
+}
+
+.status-badge-green {
+  color: var(--green-text);
+}
+
+.status-badge-red {
+  color: var(--red-text);
+}
+
+.status-badge-grey {
+  color: var(--grey-text);
+}

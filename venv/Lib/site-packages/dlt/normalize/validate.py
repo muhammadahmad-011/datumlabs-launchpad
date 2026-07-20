@@ -1,0 +1,149 @@
+from typing import Dict, List, Set
+
+from dlt.common.destination.capabilities import DestinationCapabilitiesContext
+from dlt.common.schema import Schema
+from dlt.common.schema.typing import (
+    TPartialTableSchema,
+    TTableSchema,
+    TSchemaUpdate,
+    TColumnSchemaBase,
+)
+from dlt.common.schema.utils import (
+    ensure_compatible_tables,
+    find_incomplete_columns,
+    get_first_column_name_with_prop,
+    has_table_seen_data,
+    is_complete_column,
+    is_nested_table,
+)
+from dlt.common.schema.exceptions import UnboundColumnException, UnboundColumnWithoutTypeException
+from dlt.common import logger
+
+
+def validate_and_update_schema(schema: Schema, schema_updates: List[TSchemaUpdate]) -> None:
+    """Updates `schema` tables with partial tables in `schema_updates`"""
+    for schema_update in schema_updates:
+        for table_name, table_updates in schema_update.items():
+            logger.info(f"Updating schema for table {table_name} with {len(table_updates)} deltas")
+            for partial_table in table_updates:
+                # ensure updates will pass
+                if existing_table := schema.tables.get(partial_table["name"]):
+                    ensure_compatible_tables(schema.name, existing_table, partial_table)
+
+            for partial_table in table_updates:
+                verify_partial_table(schema, partial_table)
+
+            for partial_table in table_updates:
+                # merge columns where we expect identifiers to be normalized
+                schema.update_table(partial_table, normalize_identifiers=False)
+
+
+def verify_partial_table(schema: Schema, partial_table: TPartialTableSchema) -> None:
+    """Verifies partial tables before they are merged with existing tables in schema
+
+    1. warns if root_key is added to existing table that has seen data (this will most likely fail)
+    """
+    table_name = partial_table["name"]  # names are already normalized
+    if existing_table := schema.tables.get(table_name):
+        if has_table_seen_data(existing_table):
+            # we are adding to a table materialized in the destination
+            root_key_col = get_first_column_name_with_prop(partial_table, "root_key")
+            if root_key_col:
+                logger.warning(
+                    f"You are adding a root_key in column {root_key_col} to an already existing"
+                    f" table {table_name}. "
+                    "This will most likely fail due to NOT NULL constraint. Typically this happens"
+                    " when you switch "
+                    "write disposition from append/replace to merge - in that case dlt will create"
+                    " required linking "
+                    "information automatically. You can fix your table, drop it or disable root key"
+                    " propagation. "
+                    "See details here:"
+                    " https://dlthub.com/docs/general-usage/merge-loading#switch-from-appendreplace-to-merge"
+                )
+
+
+def reconcile_null_only_columns(
+    schema: Schema, null_only_columns: Dict[str, Set[str]]
+) -> Dict[str, List[TColumnSchemaBase]]:
+    """Reconcile null-only column names against the schema. Returns a mapping of table name
+    to column bases for columns that still have no type after normalization.
+    """
+    result: Dict[str, List[TColumnSchemaBase]] = {}
+    for table_name, null_cols in null_only_columns.items():
+        table = schema.tables.get(table_name)
+        if not table:
+            continue
+        still_null: List[TColumnSchemaBase] = []
+        for col_name in sorted(null_cols):
+            col = table["columns"].get(col_name)
+            if col is None or not is_complete_column(col):
+                still_null.append(TColumnSchemaBase(name=col_name))
+        if still_null:
+            result[table_name] = still_null
+    return result
+
+
+def verify_normalized_table(
+    schema: Schema,
+    table: TTableSchema,
+    capabilities: DestinationCapabilitiesContext,
+    null_only_columns: List[TColumnSchemaBase] = None,
+) -> None:
+    """Verify `table` schema is valid for next stage after normalization. Only tables that have
+    seen data are verified. Verification happens before seen-data flag is set so new tables
+    can be detected.
+
+    1. Log warning if any incomplete nullable columns are in any data tables
+    2. Log warning for null-only columns that never received data
+    3. Raise `UnboundColumnException` on incomplete non-nullable columns (e.g. missing merge/primary key)
+    4. Log warning if table format is not supported by destination capabilities
+    """
+    null_only_names = {c["name"] for c in (null_only_columns or [])}
+    incomplete_nullable_user: List[TColumnSchemaBase] = []
+
+    for column, nullable in find_incomplete_columns(table):
+        if nullable:
+            if column["name"] not in null_only_names:
+                incomplete_nullable_user.append(column)
+        else:
+            raise UnboundColumnException(schema.name, table["name"], [column])
+
+    if null_only_columns:
+        logger.warning(
+            str(UnboundColumnWithoutTypeException(schema.name, table["name"], null_only_columns))
+        )
+
+    if incomplete_nullable_user:
+        logger.warning(
+            str(UnboundColumnException(schema.name, table["name"], incomplete_nullable_user))
+        )
+
+    # TODO: 3. raise if we detect name conflict for SCD2 columns
+    # until we track data per column we won't be able to implement this
+    # if resolve_merge_strategy(schema.tables, table, capabilities) == "scd2":
+    #     for validity_column_name in get_validity_column_names(table):
+    #         if validity_column_name in item.keys():
+    #             raise ColumnNameConflictException(
+    #                 schema_name,
+    #                 "Found column in data item with same name as validity column"
+    #                 f' "{validity_column_name}".',
+    #             )
+
+    supported_table_formats = capabilities.supported_table_formats or []
+    if "table_format" in table and table["table_format"] not in supported_table_formats:
+        logger.warning(
+            "Destination does not support the configured `table_format` value "
+            f"`{table['table_format']}` for table `{table['name']}`. "
+            "The setting will probably be ignored."
+        )
+
+    parent_key = get_first_column_name_with_prop(table, "parent_key")
+    if parent_key and not is_nested_table(table):
+        logger.warning(
+            f"Table {table['name']} has parent_key on column {parent_key} but no corresponding"
+            " `parent` table hint to refer to parent table.Such table is not considered a nested"
+            " table and relational normalizer will not generate linking data. The most probable"
+            " cause is manual modification of the dlt schema for the table. The most probable"
+            f" outcome will be NULL violation during the load process on {parent_key}."
+        )

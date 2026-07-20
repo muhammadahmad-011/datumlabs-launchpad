@@ -1,0 +1,88 @@
+import contextlib
+import os
+import sys
+from pathlib import Path
+from types import ModuleType
+from typing import Any, Iterator, Tuple
+from unittest.mock import patch
+from importlib import import_module
+
+from dlt.common import logger
+from dlt.common.exceptions import DltException
+from dlt.common.typing import DictStrAny
+from dlt.common.reflection.ref import import_module_with_missing
+
+from dlt.extract import DltSource
+from dlt.extract.pipe_iterator import ManagedPipeIterator
+
+
+def patch__init__(self: Any, *args: Any, **kwargs: Any) -> None:
+    raise PipelineIsRunning(self, args, kwargs)
+
+
+@contextlib.contextmanager
+def no_pipeline_execution() -> Iterator[None]:
+    """Prevent pipelines from running by patching DltSource and ManagedPipeIterator."""
+    with (
+        patch.object(DltSource, "__init__", patch__init__),
+        patch.object(ManagedPipeIterator, "__init__", patch__init__),
+    ):
+        yield
+
+
+def import_script_module(
+    module_path: str, script_relative_path: str, ignore_missing_imports: bool = False
+) -> ModuleType:
+    """Loads a module in `script_relative_path` by splitting it into a script module (file part) and package (folders).  `module_path` is added to sys.path
+    Optionally, missing imports will be ignored by importing a dummy module instead.
+    """
+    if os.path.isabs(script_relative_path):
+        raise ValueError(script_relative_path, f"Not relative path to `{module_path}`")
+
+    module, _ = os.path.splitext(script_relative_path)
+    module = ".".join(Path(module).parts)
+
+    # add path to module search
+    sys_path: str = None
+    if module_path not in sys.path:
+        sys_path = module_path
+        # path must be first so we always load our module of
+        sys.path.insert(0, sys_path)
+    try:
+        logger.info(f"Importing pipeline script from module `{module}` with path `{module_path}`")
+        if ignore_missing_imports:
+            return import_module_with_missing(module)
+        else:
+            return import_module(module)
+
+    finally:
+        # remove script module path
+        if sys_path:
+            sys.path.remove(sys_path)
+
+
+def import_pipeline_script(
+    module_path: str, script_relative_path: str, ignore_missing_imports: bool = False
+) -> ModuleType:
+    with no_pipeline_execution():
+        return import_script_module(
+            module_path, script_relative_path, ignore_missing_imports=ignore_missing_imports
+        )
+
+
+class PipelineIsRunning(DltException):
+    def __init__(self, obj: object, args: Tuple[str, ...], kwargs: DictStrAny) -> None:
+        if isinstance(obj, ManagedPipeIterator):
+            msg = "The pipeline script runs the pipeline on import."
+        else:
+            msg = f"The pipeline script instantiates {obj.__class__.__name__} on import."
+        msg += (
+            " Initialize sources, and run the pipeline in script entry point:\n"
+            "if __name__ == 'main':\n  ..."
+        )
+        super().__init__(
+            msg,
+            obj,
+            args,
+            kwargs,
+        )
