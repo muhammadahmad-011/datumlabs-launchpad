@@ -23,5 +23,5 @@ def run_github_pipeline():
     #  Print the generated schema definition
     print(pipeline.default_schema.to_pretty_yaml())
 
-
-run_github_pipeline()
+if __name__ == "__main__":
+    run_github_pipeline()
