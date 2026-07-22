@@ -1,26 +1,27 @@
 import dlt
-import requests
+from github import github_reactions
 
-@dlt.resource(name = 'users' , write_disposition = "merge" , primary_key= 'user_id')
-def get_users():
-    url = "https://api.stackexchange.com/2.3/users/1;2;3?site=stackoverflow"
-    response = requests.get(url)
-    response.raise_for_status()
-    yield from response.json()['items']
+def run_github_pipeline():
+    # Define the pipeline engine
+    pipeline = dlt.pipeline(
+        pipeline_name="github_reactions_pipeline",
+        destination="duckdb",
+        dataset_name="github_data"
+    )
 
-pipeline = dlt.pipeline(
-    pipeline_name="public_api_pipeline",
-    destination="duckdb",
-    dataset_name="api_data")
+    # Configure the source/resource with parameters
+    data = github_reactions(
+        owner="dlt-hub",
+        name="dlt",
+        items_per_page=100,
+        max_items=200)
 
-load_info = pipeline.run(get_users())
-print("First run complete:", load_info)
+    # Execute the extraction and load process
+    load_info = pipeline.run(data)
+    print(load_info)
 
-load_info_two = pipeline.run(get_users())
-print("Second run complete:", load_info_two)
-
-print(pipeline.default_schema.to_pretty_yaml())
-
+    #  Print the generated schema definition
+    print(pipeline.default_schema.to_pretty_yaml())
 
 
-
+run_github_pipeline()

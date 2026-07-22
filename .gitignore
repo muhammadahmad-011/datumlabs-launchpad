@@ -3,7 +3,6 @@ __pycache__/
 .vscode/
 .venv/
 *.duckdb
+.dlt/secrets.toml
 .dlt/
 github/
-github_pipeline.py
-requirements.txt
