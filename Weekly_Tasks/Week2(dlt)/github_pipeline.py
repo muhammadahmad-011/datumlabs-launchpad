@@ -1,5 +1,4 @@
 import dlt
-
 from github import github_reactions, github_repo_events, github_stargazers
 
 
@@ -12,17 +11,13 @@ def load_duckdb_repo_reactions_issues_only() -> None:
         dev_mode=True,
     )
     # get only 100 items (for issues and pull request)
-    data = github_reactions(
-        "duckdb", "duckdb", items_per_page=100, max_items=100
-    ).with_resources("issues")
+    data = github_reactions("duckdb", "duckdb", items_per_page=100, max_items=100).with_resources("issues")
     print(pipeline.run(data))
 
 
 def load_airflow_events() -> None:
     """Loads airflow events. Shows incremental loading. Forces anonymous access token"""
-    pipeline = dlt.pipeline(
-        "github_events", destination='duckdb', dataset_name="airflow_events"
-    )
+    pipeline = dlt.pipeline("github_events", destination='duckdb', dataset_name="airflow_events")
     data = github_repo_events("apache", "airflow", access_token="")
     print(pipeline.run(data))
     # if you uncomment this, it does not load the same events again
@@ -35,8 +30,7 @@ def load_dlthub_dlt_all_data() -> None:
         "github_reactions",
         destination='duckdb',
         dataset_name="dlthub_reactions",
-        dev_mode=True,
-    )
+        dev_mode=True,)
     data = github_reactions("dlt-hub", "dlt")
     print(pipeline.run(data))
 
@@ -57,4 +51,6 @@ if __name__ == "__main__":
     load_airflow_events()
     load_dlthub_dlt_all_data()
     load_dlthub_dlt_stargazers()
+
+
     

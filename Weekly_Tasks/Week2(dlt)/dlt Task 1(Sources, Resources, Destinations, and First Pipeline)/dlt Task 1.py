@@ -1,27 +1,23 @@
 import dlt
-from github import github_reactions
+import requests
 
-def run_github_pipeline():
-    # Define the pipeline engine
-    pipeline = dlt.pipeline(
-        pipeline_name="github_reactions_pipeline",
-        destination="duckdb",
-        dataset_name="github_data"
-    )
+@dlt.resource(name = 'customers')
+def fetch_data():
+    response = requests.get('https://jaffle-shop.dlthub.com/api/v1/customers?limit=100')
+    yield response.json()
+    
+pipeline = dlt.pipeline(
+    pipeline_name ='customer_pipeline',
+    destination = 'duckdb',
+    dataset_name = 'raw_data',
+)
 
-    # Configure the source/resource with parameters
-    data = github_reactions(
-        owner="dlt-hub",
-        name="dlt",
-        items_per_page=100,
-        max_items=200)
+load_info = pipeline.run(fetch_data())
+print(load_info)
 
-    # Execute the extraction and load process
-    load_info = pipeline.run(data)
-    print(load_info)
+load_info = pipeline.run(fetch_data())
+print(load_info)
 
-    #  Print the generated schema definition
-    print(pipeline.default_schema.to_pretty_yaml())
+print(pipeline.dataset()['_dlt_loads'].df())
 
-if __name__ == "__main__":
-    run_github_pipeline()
+print(pipeline.default_schema.to_pretty_yaml())
