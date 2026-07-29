@@ -28,9 +28,9 @@ class RateLimitRetrySession(Session):
         stop=stop_after_attempt(5),
         reraise=True,)
     
-    def request(self, *args, **kwargs):
+    def send(self, *args, **kwargs):
         kwargs.setdefault("timeout", 10)
-        return super().request(*args, **kwargs)
+        return super().send(*args, **kwargs)
 
 
 def fetch_paginated(endpoint, extra_params=None):
@@ -66,8 +66,7 @@ def get_questions():
 get_questions.apply_hints(
     primary_key="question_id",
     merge_key="question_id",
-    # Schema contract rule: creation_date is our incremental cursor and must never be null --
-    # a null cursor would silently break incremental loads downstream.
+    # creation_date is our incremental cursor and must never be null
     columns={"creation_date": {"nullable": True}},)
 
 
