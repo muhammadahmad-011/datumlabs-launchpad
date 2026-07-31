@@ -74,32 +74,32 @@ def yield_new_records(endpoint: str):
             
 @dlt.resource(name="pokemon", write_disposition="merge", primary_key="id")
 def get_pokemon(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('pokemon')
+    yield from yield_new_records('pokemon',since_id= last_id.last_value)
 
 
 @dlt.resource(name="pokemon_species", write_disposition="merge", primary_key="id")
 def get_pokemon_species(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('pokemon-species')
+    yield from yield_new_records('pokemon-species',since_id= last_id.last_value)
     
 
 @dlt.resource(name="ability", write_disposition="merge", primary_key="id")
 def get_ability(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('ability')
+    yield from yield_new_records('ability',since_id= last_id.last_value)
     
 
 @dlt.resource(name="move", write_disposition="merge", primary_key="id")
 def get_move(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('move')
+    yield from yield_new_records('move',since_id= last_id.last_value)
     
 
 @dlt.resource(name="type", write_disposition="merge", primary_key="id")
 def get_type(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('type')
+    yield from yield_new_records('type',since_id= last_id.last_value)
     
 
 @dlt.resource(name="item", write_disposition="merge", primary_key="id")
 def get_item(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('item')
+    yield from yield_new_records('item',since_id= last_id.last_value)
     
 
 
