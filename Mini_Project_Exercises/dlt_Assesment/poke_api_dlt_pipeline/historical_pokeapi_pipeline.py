@@ -7,8 +7,6 @@ def fetch_all_records(endpoint: str):
         record = fetch_detail(entry["url"])
         if record.get("id") is not None:
             yield record
-        else:
-            print(f"[{endpoint}] Skipping record with missing id: {entry.get('name')}")
 
 
 @dlt.resource(name="pokemon", write_disposition="merge", primary_key="id")
@@ -60,5 +58,5 @@ pipeline = dlt.pipeline(
 )
 
 if __name__ == "__main__":
-    load_info = pipeline.run((pokeapi_historical_source))
+    load_info = pipeline.run(pokeapi_historical_source())
     print(load_info)

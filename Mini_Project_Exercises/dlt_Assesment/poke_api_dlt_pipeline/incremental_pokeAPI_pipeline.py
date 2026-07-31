@@ -58,28 +58,9 @@ def fetch_paginated(endpoint: str, extra_params: dict | None = None):
             maximum_offset=MAXIMUM,
         ),
     )
-
-    yielded = 0
-    try:
-        for page in client.paginate(endpoint, params=params):
-            for record in page:
-                if yielded >= MAXIMUM:
-                    return
-                yield record
-                yielded += 1
-    except exceptions.Timeout as e:
-        print(f"[{endpoint}] Timeout after retries: {e}")
-        raise
-    except exceptions.HTTPError as e:
-        print(f"[{endpoint}] HTTP error: {e}")
-        raise
-    except exceptions.RequestException as e:
-        print(f"[{endpoint}] Network/request error: {e}")
-        raise
-    except (ValueError, KeyError) as e:
-        # Covers malformed/unexpected JSON payloads from the API
-        print(f"[{endpoint}] Invalid or unexpected API response: {e}")
-        raise
+    
+    for page in client.paginate(endpoint, params=params):
+        yield from page
 
 _detail_session = RateLimitRetrySession()
 
@@ -87,40 +68,38 @@ def fetch_detail(url: str) -> dict:
     response = _detail_session.get(url)
     return response.json()
 
-def yield_new_records(endpoint: str, last_value: int):
+def yield_new_records(endpoint: str):
     for entry in fetch_paginated(endpoint):
-        record = fetch_detail(entry["url"])
-        if record.get("id", 0) > (last_value or 0):
-            yield record
+        yield fetch_detail(entry["url"])
             
 @dlt.resource(name="pokemon", write_disposition="merge", primary_key="id")
 def get_pokemon(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('pokemon' , last_id.last_value)
+    yield from yield_new_records('pokemon')
 
 
 @dlt.resource(name="pokemon_species", write_disposition="merge", primary_key="id")
 def get_pokemon_species(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('pokemon-species' , last_id.last_value)
+    yield from yield_new_records('pokemon-species')
     
 
 @dlt.resource(name="ability", write_disposition="merge", primary_key="id")
 def get_ability(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('ability' , last_id.last_value)
+    yield from yield_new_records('ability')
     
 
 @dlt.resource(name="move", write_disposition="merge", primary_key="id")
 def get_move(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('move' , last_id.last_value)
+    yield from yield_new_records('move')
     
 
 @dlt.resource(name="type", write_disposition="merge", primary_key="id")
 def get_type(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('type' , last_id.last_value)
+    yield from yield_new_records('type')
     
 
 @dlt.resource(name="item", write_disposition="merge", primary_key="id")
 def get_item(last_id=dlt.sources.incremental("id", initial_value=0)):
-    yield from yield_new_records('item' , last_id.last_value)
+    yield from yield_new_records('item')
     
 
 
