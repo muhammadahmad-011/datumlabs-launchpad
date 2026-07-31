@@ -23,7 +23,7 @@ def fetch_paginated(endpoint, extra_params=None):
             page_param="page",
             total_path=None,
             stop_after_empty_page=True,
-            maximum_page=1,),)
+            maximum_page=3,),)
 
     for page in client.paginate(endpoint, params=params):
         yield from page
