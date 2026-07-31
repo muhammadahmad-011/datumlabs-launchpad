@@ -1,6 +1,6 @@
 import dlt
 import requests
-from requests import Session
+from requests import Session , exceptions
 from dlt.sources.helpers.rest_client import RESTClient
 from dlt.sources.helpers.rest_client.paginators import PageNumberPaginator
 from ratelimit import limits, sleep_and_retry
@@ -15,15 +15,18 @@ SITE = "stackoverflow"
 PAGESIZE = 10
 
 CALLS = 30
-five_second = 5 
+PERIOD = 1
 
 
 class RateLimitRetrySession(Session):
     @sleep_and_retry
-    @limits(calls=CALLS, period=five_second)
+    @limits(calls=CALLS, period=PERIOD)
     @retry(
         retry=retry_if_exception_type(
-            (requests.exceptions.Timeout, requests.exceptions.ConnectionError)),
+            (exceptions.Timeout, 
+             exceptions.ConnectionError, 
+             exceptions.HTTPError)
+            ),
         wait=wait_exponential(multiplier=1, min=2, max=30),
         stop=stop_after_attempt(5),
         reraise=True,)
@@ -62,32 +65,13 @@ def fetch_paginated(endpoint, extra_params=None):
 def get_questions():
     yield from fetch_paginated("questions")
 
-
-get_questions.apply_hints(
-    primary_key="question_id",
-    merge_key="question_id",
-    # creation_date is our incremental cursor and must never be null
-    columns={"creation_date": {"nullable": True}},)
-
-
 @dlt.resource(name="answers", write_disposition="merge")
 def get_answers():
     yield from fetch_paginated("answers")
 
-
-get_answers.apply_hints(
-    primary_key="answer_id",
-    merge_key="answer_id",
-    columns={"creation_date": {"nullable": True}},)
-
-
 @dlt.resource(name="tags", write_disposition="merge")
 def get_tags():
     yield from fetch_paginated("tags")
-
-
-get_tags.apply_hints(primary_key="name", merge_key="name")
-
 
 #  Transformer that fetches comments
 @dlt.transformer(name="question_comments", write_disposition="merge")
@@ -96,10 +80,10 @@ def question_comments(question):
     yield from fetch_paginated(f"questions/{question_id}/comments")
 
 
-question_comments.apply_hints(
-    primary_key="comment_id",
-    merge_key="comment_id",
-    columns={"creation_date": {"nullable": True}},)
+get_questions.apply_hints(primary_key="question_id",merge_key="question_id",)
+get_answers.apply_hints(primary_key="answer_id",merge_key="answer_id",)
+get_tags.apply_hints(primary_key="name", merge_key="name")
+question_comments.apply_hints(primary_key="comment_id",merge_key="comment_id",)
 
 
 @dlt.source(schema_contract={"tables": "freeze", "columns": "freeze", "data_type": "freeze"})
