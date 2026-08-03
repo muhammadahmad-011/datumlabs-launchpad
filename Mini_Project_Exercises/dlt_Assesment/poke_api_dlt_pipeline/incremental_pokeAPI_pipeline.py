@@ -10,11 +10,16 @@ from tenacity import (
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,)
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
 
 BASE_URL = "https://pokeapi.co/api/v2" 
 
 CALL = 30
-FIVE_SECOND = 5
+second = 5
 
 LIMIT = 20
 OFFSET = 0
@@ -22,13 +27,13 @@ MAXIMUM = 500
 
 class RateLimitRetrySession(Session):
     @sleep_and_retry
-    @limits(calls=CALL, period=FIVE_SECOND)
+    @limits(calls=CALL, period=second)
     @retry(
         retry=retry_if_exception_type(
             (
                 exceptions.Timeout,
                 exceptions.ConnectionError,
-                exceptions.ChunkedEncodingError,
+                exceptions.RequestException,
             )
         ),
         wait=wait_exponential(multiplier=1, min=2, max=30),
@@ -41,8 +46,8 @@ class RateLimitRetrySession(Session):
         response.raise_for_status()
         return response
 
-def fetch_paginated(endpoint: str, extra_params: dict | None = None):
-    params = {"limit": LIMIT, "offset": OFFSET}
+def fetch_paginated(endpoint: str,start_offset: int = 0,extra_params: dict | None = None):
+    params = {"limit": LIMIT, "offset": start_offset}
     if extra_params:
         params.update(extra_params)
 
@@ -51,10 +56,10 @@ def fetch_paginated(endpoint: str, extra_params: dict | None = None):
         session=RateLimitRetrySession(),
         paginator=OffsetPaginator(
             limit=LIMIT,
-            offset=OFFSET,
+            offset=start_offset,
             limit_param="limit",
             offset_param="offset",
-            total_path="count",       # PokeAPI list responses include "count"
+            total_path="count",   
             maximum_offset=MAXIMUM,
         ),
     )
@@ -64,40 +69,49 @@ def fetch_paginated(endpoint: str, extra_params: dict | None = None):
 
 _detail_session = RateLimitRetrySession()
 
-def fetch_detail(url: str) -> dict:
-    response = _detail_session.get(url)
-    return response.json()
+def fetch_detail(url: str) -> dict | None:
+    try:
+        response = _detail_session.get(url)
+        return response.json()
+    except exceptions.RequestException as e:
+        logger.warning(f"too many request {url} : {e}")
+        return None
 
-def yield_new_records(endpoint: str):
-    for entry in fetch_paginated(endpoint):
-        yield fetch_detail(entry["url"])
+def yield_new_records(endpoint ,since_id = None):
+    start_offset = since_id or 0
+    for entry in fetch_paginated(endpoint, start_offset = start_offset ):
+        detail = fetch_detail(entry["url"])
+        if detail is None:
+            continue
+        yield detail
+        
             
-@dlt.resource(name="pokemon", write_disposition="merge", primary_key="id")
+@dlt.resource(name="pokemon", write_disposition="merge", primary_key="id",parallelized=True)
 def get_pokemon(last_id=dlt.sources.incremental("id", initial_value=0)):
     yield from yield_new_records('pokemon',since_id= last_id.last_value)
 
 
-@dlt.resource(name="pokemon_species", write_disposition="merge", primary_key="id")
+@dlt.resource(name="pokemon_species", write_disposition="merge", primary_key="id",parallelized=True)
 def get_pokemon_species(last_id=dlt.sources.incremental("id", initial_value=0)):
     yield from yield_new_records('pokemon-species',since_id= last_id.last_value)
     
 
-@dlt.resource(name="ability", write_disposition="merge", primary_key="id")
+@dlt.resource(name="ability", write_disposition="merge", primary_key="id",parallelized=True)
 def get_ability(last_id=dlt.sources.incremental("id", initial_value=0)):
     yield from yield_new_records('ability',since_id= last_id.last_value)
     
 
-@dlt.resource(name="move", write_disposition="merge", primary_key="id")
+@dlt.resource(name="move", write_disposition="merge", primary_key="id",parallelized=True)
 def get_move(last_id=dlt.sources.incremental("id", initial_value=0)):
     yield from yield_new_records('move',since_id= last_id.last_value)
     
 
-@dlt.resource(name="type", write_disposition="merge", primary_key="id")
+@dlt.resource(name="type", write_disposition="merge", primary_key="id",parallelized=True)
 def get_type(last_id=dlt.sources.incremental("id", initial_value=0)):
     yield from yield_new_records('type',since_id= last_id.last_value)
     
 
-@dlt.resource(name="item", write_disposition="merge", primary_key="id")
+@dlt.resource(name="item", write_disposition="merge", primary_key="id",parallelized=True)
 def get_item(last_id=dlt.sources.incremental("id", initial_value=0)):
     yield from yield_new_records('item',since_id= last_id.last_value)
     
@@ -106,18 +120,18 @@ def get_item(last_id=dlt.sources.incremental("id", initial_value=0)):
 @dlt.source(max_table_nesting=0)
 def pokeapi_source():
     return [
-        get_pokemon(),
-        get_pokemon_species(),
-        get_ability(),
-        get_move(),
-        get_type(),
-        get_item(),
-    ]
+        get_pokemon,
+        get_pokemon_species,
+        get_ability,
+        get_move,
+        get_type,
+        get_item,]
 
 pipeline = dlt.pipeline(
     pipeline_name="pokeapi_pipeline",
     destination="snowflake",
     dataset_name="raw_pokemon",
 )
-load_info = pipeline.run(pokeapi_source())
-print(load_info)
+if __name__ == '__main__':
+    load_info = pipeline.run(pokeapi_source())
+    print(load_info)

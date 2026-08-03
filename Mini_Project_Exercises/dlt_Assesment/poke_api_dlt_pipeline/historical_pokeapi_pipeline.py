@@ -9,32 +9,32 @@ def fetch_all_records(endpoint: str):
             yield record
 
 
-@dlt.resource(name="pokemon", write_disposition="merge", primary_key="id")
+@dlt.resource(name="pokemon", write_disposition="replace", primary_key="id")
 def get_pokemon():
     yield from fetch_all_records("pokemon")
 
 
-@dlt.resource(name="pokemon_species", write_disposition="merge", primary_key="id")
+@dlt.resource(name="pokemon_species", write_disposition="replace", primary_key="id")
 def get_pokemon_species():
     yield from fetch_all_records("pokemon-species")
 
 
-@dlt.resource(name="ability", write_disposition="merge", primary_key="id")
+@dlt.resource(name="ability", write_disposition="replace", primary_key="id")
 def get_ability():
     yield from fetch_all_records("ability")
 
 
-@dlt.resource(name="move", write_disposition="merge", primary_key="id")
+@dlt.resource(name="move", write_disposition="replace", primary_key="id")
 def get_move():
     yield from fetch_all_records("move")
 
 
-@dlt.resource(name="type", write_disposition="merge", primary_key="id")
+@dlt.resource(name="type", write_disposition="replace", primary_key="id")
 def get_type():
     yield from fetch_all_records("type")
 
 
-@dlt.resource(name="item", write_disposition="merge", primary_key="id")
+@dlt.resource(name="item", write_disposition="replace", primary_key="id")
 def get_item():
     yield from fetch_all_records("item")
 
