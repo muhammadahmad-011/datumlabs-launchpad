@@ -5,6 +5,8 @@ from incremental_pokeAPI_pipeline import fetch_paginated, fetch_detail
 def fetch_all_records(endpoint: str):
     for entry in fetch_paginated(endpoint):
         record = fetch_detail(entry["url"])
+        if record is None:
+            continue
         if record.get("id") is not None:
             yield record
 
