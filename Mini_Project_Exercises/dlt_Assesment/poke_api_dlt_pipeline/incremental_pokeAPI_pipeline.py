@@ -1,7 +1,6 @@
 import dlt
 import requests
-from requests import Session
-from requests import exceptions
+from requests import Session , exceptions
 from dlt.sources.helpers.rest_client import RESTClient
 from dlt.sources.helpers.rest_client.paginators import OffsetPaginator
 from ratelimit import limits, sleep_and_retry
@@ -22,7 +21,6 @@ CALL = 30
 second = 5
 
 LIMIT = 20
-OFFSET = 0
 MAXIMUM = 500
 
 class RateLimitRetrySession(Session):
@@ -64,9 +62,13 @@ def fetch_paginated(endpoint: str,start_offset: int = 0,extra_params: dict | Non
         ),
     )
     
-    for page in client.paginate(endpoint, params=params):
-        yield from page
-
+    try:
+        for page in client.paginate(endpoint, params=params):
+            yield from page
+    except exceptions.RequestException as e:
+        logger.warning(f'request failed for {endpoint}:{e}')
+        return
+        
 _detail_session = RateLimitRetrySession()
 
 def fetch_detail(url: str) -> dict | None:

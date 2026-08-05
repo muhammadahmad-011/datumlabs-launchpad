@@ -4,8 +4,14 @@ import requests
 @dlt.resource(name='users', write_disposition="merge", primary_key='user_id')
 def get_users(last_access_date=dlt.sources.incremental("last_access_date",initial_value=0)):
     url = "https://api.stackexchange.com/2.3/users/1;2;3?site=stackoverflow"
-    response = requests.get(url)
-    yield from response.json()['items']
+    params = {
+        "site": "stackoverflow",
+        "fromdate": int(last_access_date.last_value),
+        "sort": "modified",
+        "order": "asc"
+    }
+    response = requests.get(url, params=params)
+    yield from response.json().get('items',[])
 
 pipeline = dlt.pipeline(
     pipeline_name="public_api_pipeline",

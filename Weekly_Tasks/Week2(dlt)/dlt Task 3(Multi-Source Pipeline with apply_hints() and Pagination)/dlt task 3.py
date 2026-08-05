@@ -27,27 +27,21 @@ def fetch_paginated(endpoint, extra_params=None):
     for page in client.paginate(endpoint, params=params):
         yield from page
 
-@dlt.resource(name="questions", write_disposition="merge")
+@dlt.resource(name="questions", write_disposition="merge" ,primary_key="question_id")
 def get_questions():
     yield from fetch_paginated("questions")
-get_questions.apply_hints(primary_key="question_id")
 
-
-@dlt.resource(name="answers", write_disposition="merge")
+@dlt.resource(name="answers", write_disposition="merge", primary_key="answer_id")
 def get_answers():
     yield from fetch_paginated("answers")
-get_answers.apply_hints(primary_key="answer_id")
 
-
-@dlt.resource(name="tags", write_disposition="merge")
+@dlt.resource(name="tags", write_disposition="merge", primary_key="name")
 def get_tags():
     yield from fetch_paginated("tags")
-get_tags.apply_hints(primary_key="name")
-
 
 @dlt.source
 def stackexchange_source():
-    return [get_questions(), get_answers(), get_tags()]
+    return [get_questions, get_answers, get_tags]
 
 
 pipeline = dlt.pipeline(

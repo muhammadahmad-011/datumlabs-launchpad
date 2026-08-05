@@ -56,34 +56,37 @@ def fetch_paginated(endpoint, extra_params=None):
             maximum_page=3,
         ),
     )
+    try:
+        for page in client.paginate(endpoint, params=params):
+            yield from page       
+    except exceptions.RequestException as e:
+        print(f'REQUEST EXCEPTION {BASE_URL}: {e}')
+    return 
 
-    for page in client.paginate(endpoint, params=params):
-        yield from page
 
-
-@dlt.resource(name="questions", write_disposition="merge")
+@dlt.resource(name="questions", write_disposition="merge", primary_key='question_id')
 def get_questions():
     yield from fetch_paginated("questions")
 
-@dlt.resource(name="answers", write_disposition="merge")
+@dlt.resource(name="answers", write_disposition="merge",primary_key="answer_id" )
 def get_answers():
     yield from fetch_paginated("answers")
 
-@dlt.resource(name="tags", write_disposition="merge")
+@dlt.resource(name="tags", write_disposition="merge",primary_key="name" )
 def get_tags():
     yield from fetch_paginated("tags")
 
 #  Transformer that fetches comments
-@dlt.transformer(name="question_comments", write_disposition="merge")
+@dlt.transformer(name="question_comments", write_disposition="merge", primary_key="comment_id")
 def question_comments(question):
     question_id = question["question_id"]
     yield from fetch_paginated(f"questions/{question_id}/comments")
 
 
-get_questions.apply_hints(primary_key="question_id",merge_key="question_id",)
-get_answers.apply_hints(primary_key="answer_id",merge_key="answer_id",)
-get_tags.apply_hints(primary_key="name", merge_key="name")
-question_comments.apply_hints(primary_key="comment_id",merge_key="comment_id",)
+get_questions.apply_hints(merge_key="question_id")
+get_answers.apply_hints(merge_key="answer_id")
+get_tags.apply_hints(merge_key="name")
+question_comments.apply_hints(merge_key="comment_id")
 
 
 @dlt.source(schema_contract={"tables": "freeze", "columns": "freeze", "data_type": "freeze"})
