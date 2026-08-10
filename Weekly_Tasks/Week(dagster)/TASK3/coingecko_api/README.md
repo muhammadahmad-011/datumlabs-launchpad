@@ -49,6 +49,12 @@ Then open the Dagster UI (usually at `http://localhost:3000`), materialize the
 the `pokeapi_daily_schedule` for automatic daily runs at 6:10 PM (Asia/Karachi
 time).
 
+> **Note:** `schedule.py` imports `pokeapi_job` via `from job import
+> pokeapi_job`, but `definitions.py` imports it via
+> `from dagster_poke_api.schedule import pokeapi_job, pokeapi_schedule`. For
+> the project to run correctly, `schedule.py`'s import should match the
+> package layout, e.g. `from dagster_poke_api.job import pokeapi_job`.
+
 ## What each asset does
 
 - **`incremental_pokeAPI_pipeline.py`** — Defines the dlt source: six

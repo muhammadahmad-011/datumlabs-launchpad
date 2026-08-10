@@ -76,7 +76,7 @@ def fetch_detail(url: str) -> dict | None:
         response = _detail_session.get(url)
         return response.json()
     except exceptions.RequestException as e:
-        logger.warning(f"too many request {url} : {e}")
+        logger.warning(f"Request Failed {url} : {e}")
         return None
 
 def yield_new_records(endpoint ,since_id = None):
