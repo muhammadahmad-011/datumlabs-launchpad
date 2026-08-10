@@ -20,9 +20,7 @@ def check_markets_data_quality(context: dg.AssetCheckExecutionContext):
     try:
         with pipeline.sql_client() as client:
             row_count = client.execute_sql("SELECT COUNT(*) FROM markets")[0][0]
-            null_ids = client.execute_sql(
-                "SELECT COUNT(*) FROM markets WHERE id IS NULL"
-            )[0][0]
+            null_ids = client.execute_sql("SELECT COUNT(*) FROM markets WHERE id IS NULL")[0][0]
         passed = (row_count > 0) and (null_ids == 0)
         error = None
     except Exception as e:

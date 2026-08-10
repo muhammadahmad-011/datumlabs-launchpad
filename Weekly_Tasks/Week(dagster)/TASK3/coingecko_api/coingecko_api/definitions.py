@@ -4,6 +4,7 @@ from dagster_dlt import DagsterDltResource
 from coingecko_api.assets import coingecko_dagster_assets, check_markets_data_quality, check_history_data_quality
 from coingecko_api.job import coingecko_job
 from coingecko_api.schedules import coingecko_daily_schedule
+from coingecko_api.sensors import slack_on_run_failure, slack_on_run_canceled
 
 
 defs = Definitions(
@@ -11,5 +12,6 @@ defs = Definitions(
     resources={"dlt": DagsterDltResource()},
     jobs=[coingecko_job],
     schedules=[coingecko_daily_schedule],
-    asset_checks=[check_markets_data_quality,check_history_data_quality,]
+    asset_checks=[check_markets_data_quality,check_history_data_quality,],
+    sensors=[slack_on_run_failure, slack_on_run_canceled],
 )
