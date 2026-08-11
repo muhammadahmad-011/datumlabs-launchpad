@@ -8,7 +8,7 @@ import datetime
 load_dotenv()
 
 slack_datum = SlackResource(token=os.getenv("SLACK_BOT_TOKEN_DATUM"))
-base_url = "https://govpluscom.dagster.plus/prod"
+base_url = "http://localhost:3000"
 
 @run_failure_sensor(
     description="Sends alerts to Slack when a Dagster job run fails",

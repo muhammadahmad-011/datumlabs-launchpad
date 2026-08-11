@@ -7,6 +7,11 @@ requires-python = ">=3.10,<3.15"
 dependencies = [
     "dagster",
     "dagster-cloud",
+    "dagster-dlt",
+    "dlt[snowflake]",
+    "requests",
+    "ratelimit",
+    "tenacity",
 ]
 
 [project.optional-dependencies]

@@ -7,6 +7,13 @@ requires-python = ">=3.10,<3.15"
 dependencies = [
     "dagster",
     "dagster-cloud",
+    "dagster-dlt",
+    "dagster-slack",
+    "dlt[duckdb]",
+    "python-dotenv",
+    "requests",
+    "requests-ratelimiter",
+    "tenacity",
 ]
 
 [project.optional-dependencies]

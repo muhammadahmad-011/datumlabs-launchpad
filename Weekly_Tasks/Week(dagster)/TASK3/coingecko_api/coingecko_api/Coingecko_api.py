@@ -136,13 +136,14 @@ def coingecko_source(top_n_pages: int = 1):
         if start >= end:
             logger.info("NOTHING TO FETCH ALREADY UP-TO-DATE %s ", coin_id)
             return
-
+        
         logger.info("Fetching for %s starting from %s...", coin_id, start)
 
-        data = fetch(
-            client,
-            f"/coins/{coin_id}/market_chart/range",
-            params={"vs_currency": "usd", "from": start, "to": end},)
+        try:
+            data = fetch(client,f"/coins/{coin_id}/market_chart/range",params={"vs_currency": "usd", "from": start, "to": end},)
+        except Exception as e:
+            logger.error("Skipping %s — history fetch failed after retries: %s", coin_id, e)
+            return
 
         records = process_chart_data(coin_id, data)
         if records:
