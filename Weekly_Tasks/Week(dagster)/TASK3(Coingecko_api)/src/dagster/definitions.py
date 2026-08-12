@@ -1,10 +1,10 @@
 import dagster
 from dagster import Definitions
 from dagster_dlt import DagsterDltResource
-from coingecko_api.assets import coingecko_dagster_assets, check_markets_data_quality, check_history_data_quality
-from coingecko_api.job import coingecko_job
-from coingecko_api.schedules import coingecko_daily_schedule
-from coingecko_api.sensors import slack_on_run_failure, slack_on_run_canceled
+from .assets import coingecko_dagster_assets, check_markets_data_quality, check_history_data_quality
+from .job import coingecko_job
+from .schedules import coingecko_daily_schedule
+from .sensors import slack_on_run_failure, slack_on_run_canceled
 
 
 defs = Definitions(

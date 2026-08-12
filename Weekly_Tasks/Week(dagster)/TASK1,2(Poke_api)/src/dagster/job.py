@@ -1,5 +1,5 @@
 import dagster as dg
-from dagster_poke_api.assets import pokeapi_dlt_assets
+from .assets import pokeapi_dlt_assets
 
 
 pokeapi_job = dg.define_asset_job(

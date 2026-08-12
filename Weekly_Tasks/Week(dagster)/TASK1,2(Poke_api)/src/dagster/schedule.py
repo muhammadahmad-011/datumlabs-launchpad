@@ -1,6 +1,6 @@
 import dagster as dg
-from dagster_poke_api.assets import pokeapi_dlt_assets
-from job import pokeapi_job
+from .assets import pokeapi_dlt_assets
+from .job import pokeapi_job
 
 pokeapi_schedule = dg.ScheduleDefinition(
     name="pokeapi_daily_schedule",

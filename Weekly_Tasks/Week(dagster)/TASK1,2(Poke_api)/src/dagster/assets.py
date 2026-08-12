@@ -1,6 +1,6 @@
 import dagster as dg
 from dagster_dlt import DagsterDltResource, dlt_assets
-from dagster_poke_api.incremental_pokeAPI_pipeline import pipeline, pokeapi_source
+from Pipeline.incremental_pokeAPI_pipeline import pipeline, pokeapi_source
 
 
 @dlt_assets(

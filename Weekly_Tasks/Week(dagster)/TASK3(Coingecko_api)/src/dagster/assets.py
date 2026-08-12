@@ -1,6 +1,6 @@
 import dagster as dg
 from dagster_dlt import DagsterDltResource, dlt_assets
-from coingecko_api.Coingecko_api import coingecko_source , pipeline
+from pipeline.Coingecko_api import coingecko_source , pipeline
 
 
 @dlt_assets(

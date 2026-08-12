@@ -1,6 +1,6 @@
 import dagster
 from dagster import ScheduleDefinition
-from coingecko_api.job import coingecko_job
+from .job import coingecko_job
 
 coingecko_daily_schedule = ScheduleDefinition(
     name="coingecko_daily_schedule",
