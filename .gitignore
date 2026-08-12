@@ -5,3 +5,10 @@ __pycache__/
 *.duckdb
 .dlt/secrets.toml
 .dlt/
+
+# dbt
+target/
+dbt_packages/
+logs/
+*.log
+profiles.yml
