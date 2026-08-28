@@ -44,7 +44,7 @@ renamed as (
         _dlt_id
 
     from source
-    where question_id is not null and title > 100
+    where question_id is not null
 
 )
 
