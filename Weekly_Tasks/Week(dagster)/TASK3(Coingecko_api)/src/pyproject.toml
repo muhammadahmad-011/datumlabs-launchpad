@@ -27,5 +27,5 @@ requires = ["hatchling>=1.19.0"]
 build-backend = "hatchling.build"
 
 [tool.dagster]
-module_name = "coingecko_api.definitions"
-code_location_name = "coingecko_api"
+module_name = "dagster_coingecko.definitions"
+code_location_name = "Coingecko_api"
