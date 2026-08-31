@@ -1,0 +1,63 @@
+version: 2
+
+models:
+  - name: int_pokemon_types_unnested
+    description: One row per Pokemon per type slot (handles dual-typing).
+    columns:
+      - name: pokemon_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_pokemon')
+                field: pokemon_id
+      - name: type_name
+        tests:
+          - not_null
+
+  - name: int_pokemon_stats_unnested
+    description: One row per Pokemon per base stat (hp, attack, defense, special-attack, special-defense, speed).
+    columns:
+      - name: pokemon_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_pokemon')
+                field: pokemon_id
+      - name: stat_name
+        tests:
+          - not_null
+      - name: base_stat
+        tests:
+          - not_null
+
+  - name: int_pokemon_abilities_unnested
+    description: One row per Pokemon per ability, flagging hidden abilities.
+    columns:
+      - name: pokemon_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_pokemon')
+                field: pokemon_id
+      - name: ability_name
+        tests:
+          - not_null
+
+  - name: int_type_damage_relations_unnested
+    description: Flattened type-vs-type damage multipliers (2x, 0.5x, 0x) pulled from each type's damage_relations JSON.
+    columns:
+      - name: attacking_type
+        tests:
+          - not_null
+      - name: defending_type
+        tests:
+          - not_null
+      - name: multiplier
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0.0, 0.5, 2.0]

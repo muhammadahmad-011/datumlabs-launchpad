@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: dim_pokemon
+    description: One row per Pokemon with primary/secondary type, total base stats, and species-level flags (legendary, mythical, baby). This is the main dimension table for the Hex dashboard.
+    columns:
+      - name: pokemon_id
+        description: Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: pokemon_name
+        tests:
+          - not_null
+      - name: total_base_stat
+        tests:
+          - not_null
+
+  - name: dim_type
+    description: One row per Pokemon type.
+    columns:
+      - name: type_id
+        tests:
+          - unique
+          - not_null
+      - name: type_name
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_ability
+    description: One row per ability with its English short effect text.
+    columns:
+      - name: ability_id
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_pokemon_stats
+    description: Long-format fact table, one row per Pokemon per stat. Ideal for bar/box charts in Hex.
+    columns:
+      - name: pokemon_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_pokemon')
+              field: pokemon_id
+      - name: stat_name
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
+
+  - name: mart_type_matchups
+    description: Full attacking-type x defending-type matrix with damage multipliers (0x, 0.5x, 1x, 2x). Source for the type-effectiveness heatmap.
+    columns:
+      - name: attacking_type
+        tests:
+          - not_null
+      - name: defending_type
+        tests:
+          - not_null
+      - name: multiplier
+        tests:
+          - not_null
+
+  - name: mart_top_pokemon
+    description: Pokemon ranked by total base stats. Source for the leaderboard chart.
+    columns:
+      - name: pokemon_id
+        tests:
+          - unique
+          - not_null
+      - name: power_rank
+        tests:
+          - not_null

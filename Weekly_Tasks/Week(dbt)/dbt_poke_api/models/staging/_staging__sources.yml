@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw_pokemon
+    schema: raw_pokemon
+    description: Raw tables loaded by the dlt PokeAPI pipeline.
+    tables:
+      - name: pokemon
+        description: One row per Pokemon, as returned by the /pokemon endpoint.
+      - name: pokemon_species
+        description: One row per species, as returned by the /pokemon-species endpoint.
+      - name: type
+        description: One row per Pokemon type, including damage relations.
+      - name: ability
+        description: One row per ability.

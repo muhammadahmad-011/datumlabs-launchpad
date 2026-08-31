@@ -2,13 +2,14 @@
 name = "dagster_poke_api"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
 requires-python = ">=3.10,<3.15"
 dependencies = [
     "dagster",
     "dagster-cloud",
     "dagster-dlt",
-    "dlt[snowflake]",
+    "dlt[duckdb]",
+    "dagster-dbt",
+    "dbt-duckdb",
     "requests",
     "ratelimit",
     "tenacity",

@@ -1,3 +1,5 @@
+import os
+
 import dlt
 import requests
 from requests import Session
@@ -129,7 +131,9 @@ def pokeapi_source():
 
 pipeline = dlt.pipeline(
     pipeline_name="pokeapi_pipeline",
-    destination="snowflake",
+    destination=dlt.destinations.duckdb(
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "pokeapi_pipeline.duckdb")
+    ),
     dataset_name="raw_pokemon",
 )
 if __name__ == '__main__':

@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: stg_pokemon
+    description: Cleaned, renamed Pokemon records. JSON columns are kept as JSON for downstream unnesting in the intermediate layer.
+    columns:
+      - name: pokemon_id
+        description: Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: pokemon_name
+        tests:
+          - not_null
+
+  - name: stg_pokemon_species
+    description: Cleaned, renamed Pokemon species records.
+    columns:
+      - name: species_id
+        description: Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: species_name
+        tests:
+          - not_null
+
+  - name: stg_type
+    description: Cleaned, renamed Pokemon type records, damage relations kept as JSON.
+    columns:
+      - name: type_id
+        description: Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: type_name
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_ability
+    description: Cleaned, renamed ability records.
+    columns:
+      - name: ability_id
+        description: Primary key.
+        tests:
+          - unique
+          - not_null
+      - name: ability_name
+        tests:
+          - not_null
