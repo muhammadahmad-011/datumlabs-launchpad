@@ -1,0 +1,64 @@
+version: 2
+
+sources:
+  - name: coingecko_data
+    description: Raw tables loaded by the dlt CoinGecko pipeline into DuckDB.
+    schema: coingecko_data
+    loader: dlt
+    tables:
+      - name: markets
+        description: >
+          Current market snapshot for the top coins, refreshed on every pipeline run
+          (write_disposition = merge, keyed on coin id).
+        loaded_at_field: last_updated
+        freshness:
+          warn_after: {count: 30, period: hour}
+          error_after: {count: 48, period: hour}
+        columns:
+          - name: id
+            description: CoinGecko coin identifier (e.g. "bitcoin").
+            tests:
+              - not_null
+              - unique
+          - name: symbol
+          - name: name
+          - name: current_price
+          - name: market_cap
+          - name: market_cap_rank
+          - name: total_volume
+          - name: high_24h
+          - name: low_24h
+          - name: price_change_24h
+          - name: price_change_percentage_24h
+          - name: market_cap_change_24h
+          - name: market_cap_change_percentage_24h
+          - name: circulating_supply
+          - name: total_supply
+          - name: max_supply
+          - name: ath
+          - name: ath_change_percentage
+          - name: ath_date
+          - name: atl
+          - name: atl_change_percentage
+          - name: atl_date
+          - name: last_updated
+
+      - name: history
+        description: >
+          Daily historical price / market cap / volume per coin, incrementally
+          loaded (write_disposition = merge, keyed on coin_id + date).
+        loaded_at_field: date_ts
+        freshness:
+          warn_after: {count: 30, period: hour}
+          error_after: {count: 48, period: hour}
+        columns:
+          - name: coin_id
+            tests:
+              - not_null
+          - name: date
+            tests:
+              - not_null
+          - name: date_ts
+          - name: price_usd
+          - name: market_cap_usd
+          - name: volume_usd

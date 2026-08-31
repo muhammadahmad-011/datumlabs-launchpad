@@ -1,6 +1,11 @@
+import os
+from pathlib import Path
+
 import dagster as dg
 from dagster_dlt import DagsterDltResource, dlt_assets
-from pipeline.Coingecko_api import coingecko_source , pipeline
+from dagster_dbt import DagsterDbtTranslator, DbtCliResource, DbtProject, dbt_assets
+
+from pipeline.Coingecko_api import coingecko_source, pipeline
 
 
 @dlt_assets(
@@ -11,7 +16,7 @@ from pipeline.Coingecko_api import coingecko_source , pipeline
 def coingecko_dagster_assets(context: dg.AssetExecutionContext, dlt: DagsterDltResource):
     yield from dlt.run(context=context)
 
- 
+
 @dg.asset_check(
     asset=dg.AssetKey("dlt_coingecko_source_markets"),
     description="Validates that markets asset is not empty and has valid market identifiers.",
@@ -26,7 +31,7 @@ def check_markets_data_quality(context: dg.AssetCheckExecutionContext):
     except Exception as e:
         context.log.error(f"check_markets_data_quality failed: {e}")
         row_count, null_ids, passed, error = 0, -1, False, str(e)
- 
+
     return dg.AssetCheckResult(
         passed=passed,
         metadata={
@@ -35,8 +40,8 @@ def check_markets_data_quality(context: dg.AssetCheckExecutionContext):
             **({"error": dg.MetadataValue.text(error)} if error else {}),
         },
     )
- 
- 
+
+
 @dg.asset_check(
     asset=dg.AssetKey("dlt_coingecko_source_history"),
     description="Validates price range constraints and record completeness for history asset.",
@@ -55,7 +60,7 @@ def check_history_data_quality(context: dg.AssetCheckExecutionContext):
     except Exception as e:
         context.log.error(f"check_history_data_quality failed: {e}")
         invalid_prices, null_keys, passed, error = -1, -1, False, str(e)
- 
+
     return dg.AssetCheckResult(
         passed=passed,
         metadata={
@@ -64,3 +69,35 @@ def check_history_data_quality(context: dg.AssetCheckExecutionContext):
             **({"error": dg.MetadataValue.text(error)} if error else {}),
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# dbt assets
+# ---------------------------------------------------------------------------
+
+DBT_PROJECT_DIR = Path(r"C:\datumlabs-launchpad\Weekly_Tasks\Week(dbt)\dbt_coingecko")
+
+DBT_PROFILES_DIR = Path(os.environ["USERPROFILE"]) / ".dbt"
+
+dbt_project = DbtProject(project_dir=DBT_PROJECT_DIR, profiles_dir=DBT_PROFILES_DIR)
+
+dbt_project.prepare_if_dev()
+
+class CoingeckoDbtTranslator(DagsterDbtTranslator):
+
+    def get_asset_key(self, dbt_resource_props) -> dg.AssetKey:
+        if dbt_resource_props["resource_type"] == "source":
+            table_name = dbt_resource_props["name"]
+            if table_name == "markets":
+                return dg.AssetKey("dlt_coingecko_source_markets")
+            if table_name == "history":
+                return dg.AssetKey("dlt_coingecko_source_history")
+        return super().get_asset_key(dbt_resource_props)
+
+
+@dbt_assets(
+    manifest=dbt_project.manifest_path,
+    dagster_dbt_translator=CoingeckoDbtTranslator(),
+)
+def coingecko_dbt_assets(context: dg.AssetExecutionContext, dbt: DbtCliResource):
+    yield from dbt.cli(["build"], context=context).stream()

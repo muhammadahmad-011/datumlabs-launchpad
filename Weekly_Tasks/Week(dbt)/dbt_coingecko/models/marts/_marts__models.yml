@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: dim_coins
+    description: One row per coin — current attributes plus market-cap tier classification.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+          - unique
+      - name: market_cap_tier
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['large_cap', 'mid_cap', 'small_cap', 'micro_cap']
+
+  - name: fct_coin_daily_metrics
+    description: Core daily fact table — one row per coin per day with returns, moving averages, volatility, trend signal.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: price_date
+        tests:
+          - not_null
+      - name: trend_signal
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['uptrend', 'downtrend', 'flat']
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - coin_id
+              - price_date
+
+  - name: fct_top_movers
+    description: Top gainers/losers for the most recent tracked day.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+
+  - name: fct_market_overview
+    description: Market-wide daily summary — total cap, volume, breadth, BTC/ETH dominance.
+    columns:
+      - name: price_date
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_liquidity
+    description: Volume-to-market-cap liquidity screen per coin per day.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: liquidity_flag
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['low_liquidity', 'moderate_liquidity', 'high_liquidity', 'unknown']
+
+  - name: fct_rank_movements
+    description: >
+      Market-cap-rank momentum per coin — climbed/dropped/unchanged between
+      recorded snapshot states. Distinct signal from price return: a coin's
+      price can rise while it still drops in rank if peers rise faster.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: rank_movement
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['first_seen', 'climbed', 'dropped', 'unchanged']

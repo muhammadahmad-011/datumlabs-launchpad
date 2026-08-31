@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: int_coin_daily_returns
+    description: Daily and 7-day % price returns per coin.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: price_date
+        tests:
+          - not_null
+
+  - name: int_coin_moving_averages
+    description: 7d/30d simple moving averages, 30d return volatility, and 7d average volume per coin.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+
+  - name: int_coin_rank_changes
+    description: >
+      Market-cap-rank movement per coin between snapshot states, derived from
+      the snap_coingecko__markets SCD2 snapshot (the raw `markets` table only
+      ever holds the current state).
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: rank_movement
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['first_seen', 'climbed', 'dropped', 'unchanged']

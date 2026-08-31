@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: stg_coingecko__markets
+    description: Cleaned, typed current-market snapshot, one row per coin.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+          - unique
+      - name: current_price_usd
+        tests:
+          - not_null
+      - name: market_cap_rank
+        description: "Nullable — CoinGecko occasionally omits rank for very new or thinly-tracked coins"
+
+  - name: stg_coingecko__history
+    description: Cleaned, typed daily history, one row per coin per date.
+    columns:
+      - name: coin_id
+        tests:
+          - not_null
+      - name: price_date
+        tests:
+          - not_null
+      - name: price_usd
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - coin_id
+              - price_date
