@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: raw_stackexchange
+    schema: stackexchange_data
+    description: "Raw Stack Exchange data loaded via dlt pipeline"
+
+    tables:
+      - name: raw_questions
+        description: "Raw questions pulled from the Stack Exchange API"
+        loaded_at_field: "to_timestamp(last_activity_date)"
+        freshness:
+          warn_after: {count: 1, period: day}
+          error_after: {count: 2, period: day}
+
+      - name: raw_answers
+        description: "Raw answers pulled from the Stack Exchange API"
+        loaded_at_field: "to_timestamp(last_activity_date)"
+        freshness:
+          warn_after: {count: 1, period: day}
+          error_after: {count: 2, period: day}
+
+      - name: raw_tags
+        description: "Raw tags pulled from the Stack Exchange API"
+        # no freshness block — tags aren't time-series data, so freshness doesn't apply
+
+      - name: raw_questions_tags
+        description: "Nested child table linking questions to their tags"
